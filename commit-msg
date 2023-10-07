@@ -1,0 +1,40 @@
+#!/bin/bash
+line_number=-1
+errs_found=0
+commit_message=""
+
+while read -r line; do
+  if [ "${line:0:1}" = "#" ]; then
+    continue
+  fi
+
+  ((line_number++))
+
+case ${line_number} in
+  0)
+    downcase_line=$(echo "$line" | tr '[:upper:]' '[:lower:]')
+
+    if ! [[ ${downcase_line} =~ ^(feature|fix|refactor|wip):.* ]]; then
+      echo 'Please use conventional commit messages in the format:'
+      echo ' <type>:<description> '
+      echo 'types: feature|fix|refactor|wip'
+      ((errs_found++))
+    fi
+    ;;
+esac
+
+commit_message="${commit_message}${line}"  #Add current line to commit_message
+done < "${1}"
+
+if [ ${#commit_message} -gt 50 ]; then
+  echo 'Commit message should be 50 characters or fewer.'
+  ((errs_found++))
+fi
+
+if [ ${errs_found} -eq 0 ]; then
+  echo 'Commit message follows conventional commits syntax.'
+else
+  echo '${errs_found} issue(s) detected with your commit message. Please fix it>'
+fi
+
+exit "${errs_found}"
